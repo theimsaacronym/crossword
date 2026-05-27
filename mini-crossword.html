@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Crossword</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #1a1a1a;
+    --white: #fafaf8;
+    --grid-bg: #ffffff;
+    --cell-size: 48px;
+    --border: #1a1a1a;
+    --accent: #1a1a1a;
+    --filled: #1a1a1a;
+    --selected: #c8e6ff;
+    --word-highlight: #e8f4ff;
+    --error: #f7c1c1;
+    --correct: #d4edda;
+    --muted: #6b6b6b;
+    --surface: #f4f3ef;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .paper-header {
+    border-bottom: 3px double var(--black);
+    padding: 1.5rem 2rem 1rem;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .paper-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .paper-name span {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.55em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 0.2em;
+  }
+
+  .issue-meta {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .puzzle-title {
+    padding: 1rem 2rem 0.5rem;
+    border-bottom: 1px solid var(--black);
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .puzzle-title h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+  .puzzle-title .edition {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0;
+    align-items: start;
+  }
+
+  @media (max-width: 640px) {
+    .layout { grid-template-columns: 1fr; }
+    .clues-panel { border-left: none; border-top: 1px solid var(--black); }
+  }
+
+  .grid-panel {
+    padding: 1.5rem 1.5rem 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .grid-wrap {
+    display: inline-block;
+    border: 2px solid var(--black);
+    line-height: 0;
+  }
+
+  .grid-row { display: flex; }
+
+  .cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    border: 1px solid var(--black);
+    background: var(--grid-bg);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.08s;
+    flex-shrink: 0;
+  }
+
+  .cell.black {
+    background: var(--filled);
+    cursor: default;
+    border-color: var(--filled);
+  }
+
+  .cell.selected { background: var(--selected); }
+  .cell.word-highlight { background: var(--word-highlight); }
+  .cell.error { background: var(--error); }
+  .cell.correct { background: var(--correct); }
+
+  .cell-number {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--black);
+    line-height: 1;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cell-letter {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--black);
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .cell input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .grid-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border: 1.5px solid var(--black);
+    background: transparent;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.1s, color 0.1s;
+  }
+
+  .btn:hover { background: var(--black); color: var(--white); }
+  .btn.primary { background: var(--black); color: var(--white); }
+  .btn.primary:hover { background: #333; }
+
+  .clues-panel {
+    border-left: 1px solid var(--black);
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 480px) {
+    .clues-panel { grid-template-columns: 1fr; }
+  }
+
+  .clue-group h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--black);
+    padding-bottom: 4px;
+    margin-bottom: 0.75rem;
+  }
+
+  .clue-list { list-style: none; }
+
+  .clue-item {
+    display: flex;
+    gap: 8px;
+    padding: 4px 6px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.08s;
+  }
+
+  .clue-item:hover { background: var(--surface); }
+  .clue-item.active { background: var(--selected); }
+  .clue-item.solved { color: var(--muted); }
+
+  .clue-num {
+    font-weight: 500;
+    min-width: 18px;
+    flex-shrink: 0;
+  }
+
+  .success-banner {
+    display: none;
+    margin: 0 2rem 1rem;
+    padding: 1rem 1.5rem;
+    border: 2px solid var(--black);
+    background: var(--surface);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .success-banner.show { display: block; }
+
+  .timer-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  .timer { font-variant-numeric: tabular-nums; min-width: 3.5ch; }
+</style>
+</head>
+<body>
+
+<header class="paper-header">
+  <div class="paper-name">
+    <span>The</span>
+    Westview Gazette
+  </div>
+  <div class="issue-meta">
+    Mini Crossword<br>
+    <span id="puzzle-date"></span>
+  </div>
+</header>
+
+<div class="puzzle-title">
+  <h1 id="puzzle-name">This Week's Puzzle</h1>
+  <span class="edition" id="puzzle-edition"></span>
+</div>
+
+<div class="success-banner" id="success-banner">
+  Solved! Well done.
+</div>
+
+<div class="layout">
+  <div class="grid-panel">
+    <div class="grid-wrap" id="grid-wrap"></div>
+    <div class="timer-row">
+      <span>Time:</span>
+      <span class="timer" id="timer">0:00</span>
+    </div>
+    <div class="grid-controls">
+      <button class="btn" onclick="checkPuzzle()">Check</button>
+      <button class="btn" onclick="revealCurrent()">Reveal letter</button>
+      <button class="btn" onclick="clearPuzzle()">Clear</button>
+    </div>
+  </div>
+
+  <div class="clues-panel">
+    <div class="clue-group">
+      <h2>Across</h2>
+      <ul class="clue-list" id="across-clues"></ul>
+    </div>
+    <div class="clue-group">
+      <h2>Down</h2>
+      <ul class="clue-list" id="down-clues"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+const PUZZLE = {
+  meta: {
+    name: "Week 1 — Welcome Back",
+    edition: "Fall 2025",
+  },
+  grid: [
+    ["S","T","A","F","F","#","P","E","P"],
+    ["C","#","R","#","R","#","A","#","O"],
+    ["H","O","M","E","R","O","O","M","S"],
+    ["O","#","O","#","E","#","S","#","T"],
+    ["O","P","E","N","S","#","#","#","E"],
+    ["L","#","S","#","H","A","L","L","S"],
+    ["#","#","#","#","#","#","#","#","#"],
+    ["Q","U","I","Z","#","G","R","A","D"],
+    ["#","B","#","#","#","#","#","#","E"]
+  ],
+  clues: {
+    across: [
+      { number: 1,  row: 0, col: 0, len: 5, clue: "Newspaper writers and editors" },
+      { number: 6,  row: 0, col: 6, len: 3, clue: "School spirit, for short" },
+      { number: 7,  row: 2, col: 0, len: 9, clue: "Where students start the day (pl.)" },
+      { number: 9,  row: 4, col: 0, len: 5, clue: "What doors do at 8am" },
+      { number: 11, row: 5, col: 5, len: 4, clue: "Between classrooms" },
+      { number: 12, row: 7, col: 0, len: 4, clue: "Pop ___, classroom test" },
+      { number: 13, row: 7, col: 5, len: 4, clue: "Report card letters" }
+    ],
+    down: [
+      { number: 1,  row: 0, col: 0, len: 6, clue: "High ___ (where you are)" },
+      { number: 2,  row: 0, col: 2, len: 6, clue: "Theme for a trip or a paper" },
+      { number: 3,  row: 0, col: 4, len: 5, clue: "Dining hall offering, informally" },
+      { number: 4,  row: 0, col: 6, len: 5, clue: "Hall monitor's beat, pl." },
+      { number: 5,  row: 0, col: 8, len: 8, clue: "State of exam readiness" },
+      { number: 8,  row: 7, col: 1, len: 2, clue: "Quiet! (library shh)" },
+      { number: 10, row: 7, col: 5, len: 2, clue: "Aim for an A, e.g." }
+    ]
+  }
+};
+
+let selectedRow = -1, selectedCol = -1, direction = 'across';
+let timerInterval, seconds = 0, started = false, solved = false;
+const rows = PUZZLE.grid.length, cols = PUZZLE.grid[0].length;
+const userGrid = Array.from({length: rows}, () => Array(cols).fill(''));
+const revealedCells = Array.from({length: rows}, () => Array(cols).fill(false));
+
+function fmt(s) {
+  const m = Math.floor(s/60), sec = s%60;
+  return `${m}:${sec.toString().padStart(2,'0')}`;
+}
+
+function startTimer() {
+  if (started || solved) return;
+  started = true;
+  timerInterval = setInterval(() => {
+    seconds++;
+    document.getElementById('timer').textContent = fmt(seconds);
+  }, 1000);
+}
+
+function buildGrid() {
+  const wrap = document.getElementById('grid-wrap');
+  wrap.innerHTML = '';
+  const numberMap = buildNumberMap();
+
+  for (let r = 0; r < rows; r++) {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'grid-row';
+    for (let c = 0; c < cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (PUZZLE.grid[r][c] === '#' ? ' black' : '');
+      cell.dataset.r = r; cell.dataset.c = c;
+
+      if (PUZZLE.grid[r][c] !== '#') {
+        if (numberMap[r][c]) {
+          const num = document.createElement('div');
+          num.className = 'cell-number';
+          num.textContent = numberMap[r][c];
+          cell.appendChild(num);
+        }
+        const letter = document.createElement('div');
+        letter.className = 'cell-letter';
+        letter.id = `letter-${r}-${c}`;
+        cell.appendChild(letter);
+
+        const inp = document.createElement('input');
+        inp.type = 'text'; inp.maxLength = 1; inp.autocomplete = 'off';
+        inp.addEventListener('mousedown', e => { e.preventDefault(); selectCell(r, c); });
+        inp.addEventListener('keydown', e => handleKey(e, r, c));
+        cell.appendChild(inp);
+        cell.addEventListener('click', () => selectCell(r, c));
+      }
+      rowEl.appendChild(cell);
+    }
+    wrap.appendChild(rowEl);
+  }
+  buildClues();
+}
+
+function buildNumberMap() {
+  const map = Array.from({length: rows}, () => Array(cols).fill(0));
+  let n = 1;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (PUZZLE.grid[r][c] === '#') continue;
+      const startsAcross = (c === 0 || PUZZLE.grid[r][c-1] === '#') && c+1 < cols && PUZZLE.grid[r][c+1] !== '#';
+      const startsDown   = (r === 0 || PUZZLE.grid[r-1][c] === '#') && r+1 < rows && PUZZLE.grid[r+1][c] !== '#';
+      if (startsAcross || startsDown) { map[r][c] = n++; }
+    }
+  }
+  return map;
+}
+
+function buildClues() {
+  ['across','down'].forEach(dir => {
+    const ul = document.getElementById(`${dir}-clues`);
+    ul.innerHTML = '';
+    PUZZLE.clues[dir].forEach(clue => {
+      const li = document.createElement('li');
+      li.className = 'clue-item';
+      li.id = `clue-${dir}-${clue.number}`;
+      li.innerHTML = `<span class="clue-num">${clue.number}</span><span>${clue.clue}</span>`;
+      li.addEventListener('click', () => {
+        direction = dir;
+        selectCell(clue.row, clue.col, true);
+      });
+      ul.appendChild(li);
+    });
+  });
+}
+
+function getClueAt(r, c, dir) {
+  return PUZZLE.clues[dir].find(clue => {
+    if (dir === 'across') return clue.row === r && c >= clue.col && c < clue.col + clue.len;
+    return clue.col === c && r >= clue.row && r < clue.row + clue.len;
+  });
+}
+
+function selectCell(r, c, forceDir=false) {
+  if (PUZZLE.grid[r][c] === '#') return;
+  if (!forceDir && r === selectedRow && c === selectedCol) {
+    direction = direction === 'across' ? 'down' : 'across';
+  }
+  selectedRow = r; selectedCol = c;
+
+  const hasAcross = !!getClueAt(r, c, 'across');
+  const hasDown   = !!getClueAt(r, c, 'down');
+  if (!hasAcross && hasDown) direction = 'down';
+  if (!hasDown && hasAcross) direction = 'across';
+
+  highlightCells();
+  document.querySelector(`[data-r="${r}"][data-c="${c}"] input`)?.focus();
+}
+
+function highlightCells() {
+  document.querySelectorAll('.cell:not(.black)').forEach(el => {
+    el.classList.remove('selected','word-highlight');
+  });
+  document.querySelectorAll('.clue-item').forEach(el => el.classList.remove('active'));
+
+  const activeClue = getClueAt(selectedRow, selectedCol, direction);
+  if (activeClue) {
+    const key = `clue-${direction}-${activeClue.number}`;
+    document.getElementById(key)?.classList.add('active');
+    for (let i = 0; i < activeClue.len; i++) {
+      const r2 = direction === 'across' ? activeClue.row : activeClue.row + i;
+      const c2 = direction === 'across' ? activeClue.col + i : activeClue.col;
+      const el = document.querySelector(`[data-r="${r2}"][data-c="${c2}"]`);
+      if (el) el.classList.add('word-highlight');
+    }
+  }
+  const sel = document.querySelector(`[data-r="${selectedRow}"][data-c="${selectedCol}"]`);
+  if (sel) { sel.classList.remove('word-highlight'); sel.classList.add('selected'); }
+}
+
+function handleKey(e, r, c) {
+  startTimer();
+  if (e.key === 'Tab') { e.preventDefault(); return; }
+  if (e.key === 'ArrowRight') { e.preventDefault(); moveDir(r,c,0,1); return; }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); moveDir(r,c,0,-1); return; }
+  if (e.key === 'ArrowDown')  { e.preventDefault(); moveDir(r,c,1,0); return; }
+  if (e.key === 'ArrowUp')    { e.preventDefault(); moveDir(r,c,-1,0); return; }
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    if (userGrid[r][c]) {
+      userGrid[r][c] = '';
+      document.getElementById(`letter-${r}-${c}`).textContent = '';
+      clearStatus(r,c);
+    } else { moveBack(r,c); }
+    return;
+  }
+  if (/^[a-zA-Z]$/.test(e.key)) {
+    e.preventDefault();
+    if (revealedCells[r][c]) return;
+    userGrid[r][c] = e.key.toUpperCase();
+    document.getElementById(`letter-${r}-${c}`).textContent = e.key.toUpperCase();
+    clearStatus(r,c);
+    advanceDir(r,c);
+    checkComplete();
+  }
+}
+
+function moveDir(r,c,dr,dc) {
+  let nr=r+dr, nc=c+dc;
+  while (nr>=0&&nr<rows&&nc>=0&&nc<cols&&PUZZLE.grid[nr][nc]==='#') { nr+=dr; nc+=dc; }
+  if (nr>=0&&nr<rows&&nc>=0&&nc<cols) { selectedRow=nr; selectedCol=nc; highlightCells(); document.querySelector(`[data-r="${nr}"][data-c="${nc}"] input`)?.focus(); }
+}
+
+function advanceDir(r,c) {
+  const dr = direction==='down'?1:0, dc = direction==='across'?1:0;
+  let nr=r+dr, nc=c+dc;
+  while (nr>=0&&nr<rows&&nc>=0&&nc<cols) {
+    if (PUZZLE.grid[nr][nc]!=='#') { selectedRow=nr; selectedCol=nc; highlightCells(); document.querySelector(`[data-r="${nr}"][data-c="${nc}"] input`)?.focus(); return; }
+    nr+=dr; nc+=dc;
+  }
+}
+
+function moveBack(r,c) {
+  const dr=direction==='down'?-1:0, dc=direction==='across'?-1:0;
+  let nr=r+dr, nc=c+dc;
+  while(nr>=0&&nr<rows&&nc>=0&&nc<cols) {
+    if(PUZZLE.grid[nr][nc]!=='#') { selectedRow=nr; selectedCol=nc; highlightCells(); document.querySelector(`[data-r="${nr}"][data-c="${nc}"] input`)?.focus(); return; }
+    nr+=dr; nc+=dc;
+  }
+}
+
+function clearStatus(r,c) {
+  const el=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+  if(el){el.classList.remove('error','correct');}
+}
+
+function checkPuzzle() {
+  let allCorrect=true;
+  for(let r=0;r<rows;r++){for(let c=0;c<cols;c++){
+    if(PUZZLE.grid[r][c]==='#') continue;
+    const el=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    el.classList.remove('error','correct');
+    if(!userGrid[r][c]){allCorrect=false;continue;}
+    if(userGrid[r][c]===PUZZLE.grid[r][c]){el.classList.add('correct');}
+    else{el.classList.add('error');allCorrect=false;}
+  }}
+  if(allCorrect) showSolved();
+}
+
+function revealCurrent() {
+  if(selectedRow<0) return;
+  const r=selectedRow,c=selectedCol;
+  userGrid[r][c]=PUZZLE.grid[r][c];
+  revealedCells[r][c]=true;
+  document.getElementById(`letter-${r}-${c}`).textContent=PUZZLE.grid[r][c];
+  clearStatus(r,c);
+  checkComplete();
+}
+
+function clearPuzzle() {
+  for(let r=0;r<rows;r++){for(let c=0;c<cols;c++){
+    userGrid[r][c]=''; revealedCells[r][c]=false;
+    const el=document.getElementById(`letter-${r}-${c}`);
+    if(el) el.textContent='';
+    clearStatus(r,c);
+  }}
+  solved=false; document.getElementById('success-banner').classList.remove('show');
+  document.querySelectorAll('.clue-item').forEach(el=>el.classList.remove('solved'));
+}
+
+function checkComplete() {
+  for(let r=0;r<rows;r++){for(let c=0;c<cols;c++){
+    if(PUZZLE.grid[r][c]==='#') continue;
+    if(userGrid[r][c]!==PUZZLE.grid[r][c]) return;
+  }}
+  showSolved();
+}
+
+function showSolved() {
+  if(solved) return;
+  solved=true;
+  clearInterval(timerInterval);
+  document.getElementById('success-banner').classList.add('show');
+  document.querySelectorAll('.cell:not(.black)').forEach(el=>{ el.classList.remove('error'); el.classList.add('correct'); });
+}
+
+function init() {
+  const d = new Date();
+  document.getElementById('puzzle-date').textContent = d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('puzzle-name').textContent = PUZZLE.meta.name;
+  document.getElementById('puzzle-edition').textContent = PUZZLE.meta.edition;
+  buildGrid();
+}
+
+init();
+</script>
+</body>
+</html>
