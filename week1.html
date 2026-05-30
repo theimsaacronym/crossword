@@ -9,8 +9,8 @@
             --cell-size: 50px;
             --black-cell: #1a1a1a;
             --white-cell: #ffffff;
-            --active-color: #ffda79;
-            --word-highlight: #ffeaa7;
+            --active-color: #74b9ff; /* Light vibrant blue for the focused cell */
+            --word-highlight: #dff9fb; /* Soft ice blue for the active word path */
             --correct-color: #2ecc71;
             --incorrect-color: #ff7675;
         }
@@ -319,6 +319,7 @@
             }, 1000);
         }
 
+        // Display update structure
         function updateTimerDisplay() {
             const minutes = Math.floor(timerSeconds / 60);
             const seconds = timerSeconds % 60;
@@ -578,9 +579,10 @@
             return r;
         }
 
+        // Boundary safety configurations
         function getWordStartCol(r, c) {
             if (currentDirection === "across") {
-                while (c > 0 && puzzleData[r][c - 1] !== " ") r--;
+                while (c > 0 && puzzleData[r][c - 1] !== " ") c--;
             }
             return c;
         }
