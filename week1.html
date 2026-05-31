@@ -60,6 +60,7 @@
             background-color: #333;
             border: 2px solid #333;
             box-sizing: content-box;
+            height: fit-content; /* Keeps background from stretching past actual cell content rows */
         }
 
         /* Cell Styling */
@@ -293,7 +294,15 @@
             document.getElementById("clues-wrapper").classList.remove("hidden-clues");
             document.getElementById("check-btn").disabled = false;
             disableGridInputs(false);
-            selectCell(0, 0);
+            
+            // Go to the first cell of the first across clue instead of (0,0)
+            if (clues.across && clues.across.length > 0) {
+                currentDirection = "across";
+                selectCell(clues.across[0].row, clues.across[0].col);
+            } else {
+                selectCell(0, 0);
+            }
+            
             startTimer();
         }
 
@@ -434,8 +443,8 @@
             }
         }
 
+        // Checks if a cell belongs to a word in a specific direction
         function isWordViable(r, c, dir) {
-            // Checks if a cell belongs to a word in a specific direction
             if (dir === "across") {
                 return (c > 0 && puzzleData[r][c-1] !== " ") || (c < GRID_SIZE - 1 && puzzleData[r][c+1] !== " ");
             } else {
