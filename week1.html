@@ -54,8 +54,8 @@
         /* Crossword Grid Layout */
         .crossword-grid {
             display: grid;
-            grid-template-columns: repeat(7, var(--cell-size));
-            grid-template-rows: repeat(7, var(--cell-size));
+            grid-template-columns: repeat(5, var(--cell-size));
+            grid-template-rows: repeat(5, var(--cell-size));
             gap: 1px;
             background-color: #333;
             border: 2px solid #333;
@@ -244,29 +244,25 @@
 
     <script>
         // CONFIGURATION: DEFINE YOUR PUZZLE HERE
-        // Use a 7x7 array. Use spaces " " for black blocks.
+        // Use a 5x5 array. Use spaces " " for black blocks.
         const puzzleData = [
-            ["C", "A", "C", "T", "P", "S", " "],
-            ["A", " ", "A", " ", "H", " ", " "],
-            ["M", "A", "T", "C", "O", "E", "S"],
-            ["E", " ", "C", " ", "N", " ", "T"],
-            ["L", " ", "H", " ", "E", " ", "A"],
-            [" ", " ", "E", " ", " ", " ", "R"],
-            [" ", "B", "R", "E", "A", "K", " "]
+            [" ", "I", "D", "O", "L"],
+            [" ", " ", " ", " ", "E"],
+            ["R", "E", "L", "A", "X"],
+            ["E", " ", " ", " ", " "],
+            ["S", "I", "N", "E", " "],
         ];
 
         // Define your clues mapped to [row, col] starts
         const clues = {
             across: [
-                { number: 1, row: 0, col: 0, text: "Desert plant with spines" },
-                { number: 4, row: 2, col: 0, text: "Used to light a fire" },
-                { number: 6, row: 6, col: 1, text: "Snaps into pieces" }
+                { number: 1, row: 0, col: 1, text: "Desert plant with spines" },
+                { number: 2, row: 2, col: 0, text: "What we will have no time to do now that school has started" },
+                { number: 4, row: 4, col: 0, text: "tan over cos" }
             ],
             down: [
-                { number: 1, row: 0, col: 0, text: "Desert animal with humps" },
-                { number: 2, row: 0, col: 2, text: "Grab or seize" },
-                { number: 3, row: 0, col: 4, text: "Device used to call someone" },
-                { number: 5, row: 2, col: 6, text: "Twinkle twinkle little ___" }
+                { number: 1, row: 0, col: 0, text: "1501-1507 are all referred to as ___ halls" },
+                { number: 2, row: 0, col: 4, text: "Abbreviation for part of campus that recieves a surge of people at 11:00AM" },
             ]
         };
 
@@ -274,7 +270,7 @@
         let currentDirection = "across"; // "across" or "down"
         let activeRow = 0;
         let activeCol = 0;
-        const GRID_SIZE = 7;
+        const GRID_SIZE = 5;
         
         // Timer variables
         let timerSeconds = 0;
