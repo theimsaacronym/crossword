@@ -491,10 +491,22 @@
     async function initialize(windowRef) {
         const documentRef = windowRef.document;
         const message = documentRef.getElementById("message");
-        const slug = new URLSearchParams(windowRef.location.search).get("puzzle");
-        if (slug && SLUG_PATTERN.test(slug)) {
-            const selectedPuzzle = documentRef.querySelector(`[data-puzzle="${slug}"]`);
-            if (selectedPuzzle) selectedPuzzle.setAttribute("aria-current", "page");
+        const searchParams = new URLSearchParams(windowRef.location.search);
+        const slug = searchParams.get("puzzle");
+        const puzzleSelector = documentRef.getElementById("puzzle-selector");
+        if (puzzleSelector && searchParams.get("source") !== "current") {
+            const tileGrid = documentRef.getElementById("puzzle-tile-grid");
+            for (let weekNumber = 1; weekNumber <= 36; weekNumber += 1) {
+                const tile = documentRef.createElement("a");
+                const tileSlug = `week${weekNumber}`;
+                tile.className = "puzzle-tile";
+                tile.href = `?puzzle=${tileSlug}`;
+                tile.textContent = String(weekNumber);
+                tile.setAttribute("aria-label", `Puzzle ${weekNumber}`);
+                if (tileSlug === slug) tile.setAttribute("aria-current", "page");
+                tileGrid.appendChild(tile);
+            }
+            puzzleSelector.hidden = false;
         }
         if (!slug || !SLUG_PATTERN.test(slug)) {
             message.textContent = "Choose a valid crossword using a puzzle link such as ?puzzle=week1.";

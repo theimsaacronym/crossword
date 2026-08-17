@@ -73,7 +73,7 @@
 
             const puzzleSlug = `week${weekNumber}`;
             const puzzleUrl = new URL(`../puzzles/${puzzleSlug}.json`, window.location.href);
-            const playerUrl = new URL(`../play/?puzzle=${puzzleSlug}`, window.location.href);
+            const playerUrl = new URL(`../play/?puzzle=${puzzleSlug}&source=current`, window.location.href);
 
             try {
                 const response = await fetch(puzzleUrl, {

@@ -12,8 +12,8 @@ WordPress can permanently embed:
 
 The page at `current/index.html` uses the visitor's local calendar date to
 calculate the number of weeks since Monday, August 17, 2026. It checks for
-`puzzles/weekN.json` and redirects to
-`play/?puzzle=weekN` when that file exists. If it has not been published, the
+`puzzles/weekN.json` and redirects to the shared player with its puzzle selector
+hidden when that file exists. If it has not been published, the
 page shows a friendly availability message instead of a broken crossword.
 
 Legacy root-level weekly HTML files remain in place for old external links.
