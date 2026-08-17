@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>The Acronym Crossword | Fullscreen Test</title>
+    <link rel="stylesheet" href="../assets/crossword.css">
+    <style>
+        .btn-fullscreen {
+            background: #2d3436;
+            color: #fff;
+        }
+
+        .btn-fullscreen:hover {
+            background: #000;
+        }
+
+        .btn-open-page {
+            background: #0984e3;
+            color: #fff;
+        }
+
+        .btn-open-page:hover {
+            background: #0769b2;
+        }
+
+        html:fullscreen {
+            overflow-y: auto;
+            background: #f5f6fa;
+        }
+
+        html:fullscreen body {
+            min-height: 100dvh;
+            padding-top: max(10px, env(safe-area-inset-top));
+            padding-right: max(10px, env(safe-area-inset-right));
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            padding-left: max(10px, env(safe-area-inset-left));
+        }
+    </style>
+    <script>
+        (function selectCurrentPuzzle() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("puzzle")) return;
+
+            const weekOneUtc = Date.UTC(2026, 7, 17);
+            const localDate = new Date();
+            const localDateAsUtc = Date.UTC(
+                localDate.getFullYear(),
+                localDate.getMonth(),
+                localDate.getDate()
+            );
+            const weekNumber = Math.floor((localDateAsUtc - weekOneUtc) / (7 * 24 * 60 * 60 * 1000)) + 1;
+
+            if (weekNumber > 0) {
+                params.set("puzzle", `week${weekNumber}`);
+                params.set("source", "current");
+                window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+            }
+        }());
+    </script>
+</head>
+<body>
+    <h1 id="puzzle-title">The Acronym Crossword</h1>
+
+    <nav class="puzzle-selector" id="puzzle-selector" aria-labelledby="puzzle-selector-title" hidden>
+        <h2 id="puzzle-selector-title">Choose a puzzle</h2>
+        <div class="puzzle-tile-grid" id="puzzle-tile-grid"></div>
+    </nav>
+
+    <div class="timer-container">Time: <span id="timer">00:00</span></div>
+
+    <main class="game-container" id="game" hidden>
+        <div class="crossword-grid" id="grid" role="grid" aria-label="Crossword grid"></div>
+
+        <div class="clues-container hidden-clues" id="clues-wrapper">
+            <div class="start-overlay" id="overlay">
+                <button class="btn-start" id="start-btn" type="button">Start Puzzle</button>
+            </div>
+
+            <section class="clue-section">
+                <h2>Across</h2>
+                <ul class="clue-list" id="across-clues"></ul>
+            </section>
+            <section class="clue-section">
+                <h2>Down</h2>
+                <ul class="clue-list" id="down-clues"></ul>
+            </section>
+        </div>
+    </main>
+
+    <div class="controls" id="controls" hidden>
+        <div class="puzzle-controls">
+            <button class="btn-check" id="check-btn" type="button" disabled>Check Puzzle</button>
+            <button class="btn-reveal" id="reveal-btn" type="button" disabled>Reveal Tile</button>
+            <button class="btn-reset" id="reset-btn" type="button">Reset</button>
+            <button class="btn-fullscreen" id="fullscreen-btn" type="button" hidden>Enter Fullscreen</button>
+            <a class="button-link btn-open-page" id="open-page-link" target="_blank" rel="noopener noreferrer" hidden>Open Full Page</a>
+        </div>
+        <div class="feedback-options">
+            <a class="button-link btn-feedback" href="https://docs.google.com/forms/d/e/1FAIpQLSdEkksD2E3fPwQI0q9jJVvUVULORspFTuo5K-cKJL17OnD6Ng/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Submit a bug report or suggestion</a>
+            <small>Or email <a href="mailto:iwang@imsa.edu">iwang@imsa.edu</a> or <a href="mailto:acole@imsa.edu">acole@imsa.edu</a></small>
+        </div>
+    </div>
+    <p class="message" id="message" role="alert">Loading crossword&hellip;</p>
+
+    <script src="../assets/crossword.js"></script>
+    <script>
+        (function enableFullscreenTest() {
+            const fullscreenButton = document.getElementById("fullscreen-btn");
+            const openPageLink = document.getElementById("open-page-link");
+
+            openPageLink.href = window.location.href;
+
+            function updateFullscreenButton() {
+                const canUseFullscreen = Boolean(
+                    document.fullscreenEnabled && document.documentElement.requestFullscreen
+                );
+                fullscreenButton.hidden = !canUseFullscreen;
+                openPageLink.hidden = canUseFullscreen;
+                fullscreenButton.textContent = document.fullscreenElement
+                    ? "Exit Fullscreen"
+                    : "Enter Fullscreen";
+            }
+
+            fullscreenButton.addEventListener("click", async function toggleFullscreen() {
+                try {
+                    if (document.fullscreenElement) {
+                        await document.exitFullscreen();
+                    } else {
+                        await document.documentElement.requestFullscreen();
+                    }
+                } catch (error) {
+                    fullscreenButton.hidden = true;
+                    openPageLink.hidden = false;
+                    openPageLink.focus();
+                }
+            });
+
+            document.addEventListener("fullscreenchange", updateFullscreenButton);
+            updateFullscreenButton();
+        }());
+    </script>
+</body>
+</html>
