@@ -492,6 +492,10 @@
         const documentRef = windowRef.document;
         const message = documentRef.getElementById("message");
         const slug = new URLSearchParams(windowRef.location.search).get("puzzle");
+        if (slug && SLUG_PATTERN.test(slug)) {
+            const selectedPuzzle = documentRef.querySelector(`[data-puzzle="${slug}"]`);
+            if (selectedPuzzle) selectedPuzzle.setAttribute("aria-current", "page");
+        }
         if (!slug || !SLUG_PATTERN.test(slug)) {
             message.textContent = "Choose a valid crossword using a puzzle link such as ?puzzle=week1.";
             return;
