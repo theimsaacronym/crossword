@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>The Acronym Crossword</title>
+    <link rel="stylesheet" href="../assets/crossword.css">
+</head>
+<body>
+    <h1 id="puzzle-title">The Acronym Crossword</h1>
+    <div class="timer-container">Time: <span id="timer">00:00</span></div>
+
+    <main class="game-container" id="game" hidden>
+        <div class="crossword-grid" id="grid" role="grid" aria-label="Crossword grid"></div>
+
+        <div class="clues-container hidden-clues" id="clues-wrapper">
+            <div class="start-overlay" id="overlay">
+                <button class="btn-start" id="start-btn" type="button">Start Puzzle</button>
+            </div>
+
+            <section class="clue-section">
+                <h2>Across</h2>
+                <ul class="clue-list" id="across-clues"></ul>
+            </section>
+            <section class="clue-section">
+                <h2>Down</h2>
+                <ul class="clue-list" id="down-clues"></ul>
+            </section>
+        </div>
+    </main>
+
+    <div class="controls" id="controls" hidden>
+        <div class="puzzle-controls">
+            <button class="btn-check" id="check-btn" type="button" disabled>Check Puzzle</button>
+            <button class="btn-reveal" id="reveal-btn" type="button" disabled>Reveal Tile</button>
+            <button class="btn-reset" id="reset-btn" type="button">Reset</button>
+        </div>
+        <div class="feedback-options">
+            <a class="button-link btn-feedback" href="https://docs.google.com/forms/d/e/1FAIpQLSdEkksD2E3fPwQI0q9jJVvUVULORspFTuo5K-cKJL17OnD6Ng/viewform?usp=publish-editor" target="_blank" rel="noopener noreferrer">Submit a bug report or suggestion</a>
+            <small>Or email <a href="mailto:iwang@imsa.edu">iwang@imsa.edu</a> or <a href="mailto:acole@imsa.edu">acole@imsa.edu</a></small>
+        </div>
+    </div>
+    <p class="message" id="message" role="alert">Loading crossword&hellip;</p>
+
+    <script src="../assets/crossword.js"></script>
+</body>
+</html>

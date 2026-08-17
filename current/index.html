@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Current Crossword</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            box-sizing: border-box;
+            background: #f5f6fa;
+            color: #2f3640;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+        }
+
+        main {
+            max-width: 34rem;
+            padding: 24px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        p {
+            margin-bottom: 0;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Current Crossword</h1>
+        <p id="status" role="status">Loading this week&rsquo;s crossword&hellip;</p>
+    </main>
+
+    <script>
+        const WEEK_ONE_UTC = Date.UTC(2026, 7, 17);
+        const DAYS_PER_WEEK = 7;
+        const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+        function getWeekNumber(date) {
+            // Convert the visitor's local calendar date to UTC before subtracting.
+            // This avoids daylight-saving time changing the Monday boundary.
+            const localDateAsUtc = Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate()
+            );
+            const daysSinceWeekOne = Math.floor(
+                (localDateAsUtc - WEEK_ONE_UTC) / MILLISECONDS_PER_DAY
+            );
+
+            return Math.floor(daysSinceWeekOne / DAYS_PER_WEEK) + 1;
+        }
+
+        async function loadCurrentCrossword() {
+            const status = document.getElementById("status");
+            const weekNumber = getWeekNumber(new Date());
+
+            if (weekNumber < 1) {
+                status.textContent = "The first crossword will be available Monday, August 17, 2026.";
+                return;
+            }
+
+            const puzzleSlug = `week${weekNumber}`;
+            const puzzleUrl = new URL(`../puzzles/${puzzleSlug}.json`, window.location.href);
+            const playerUrl = new URL(`../play/?puzzle=${puzzleSlug}`, window.location.href);
+
+            try {
+                const response = await fetch(puzzleUrl, {
+                    method: "HEAD",
+                    cache: "no-store"
+                });
+
+                if (!response.ok) {
+                    status.textContent = `Week ${weekNumber}'s crossword is not available yet. Please check back soon.`;
+                    return;
+                }
+
+                window.location.replace(playerUrl.href);
+            } catch (error) {
+                status.textContent = "The current crossword could not be loaded. Please check your connection and try again.";
+            }
+        }
+
+        loadCurrentCrossword();
+    </script>
+</body>
+</html>
